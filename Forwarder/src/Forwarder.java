@@ -1,17 +1,28 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 
 public class Forwarder {
-  static ServerSocket     s1, s2;
-  static ForwarderHandler f1, f2;
+  static ServerSocket                    s1, s2;
+  static ForwarderHandler                f1, f2;
+  static ServerSocketChannel             server;
+  static HashMap<Integer, SocketChannel> g = new HashMap<Integer, SocketChannel>();
 
   public static void main(String[] args) throws IOException, Exception, SecurityException {
 
-    int choice = 1;
+    int choice = 2;
     switch (choice) {
       case 1:
         //server listens to telnet client1 on port 3333
@@ -34,7 +45,50 @@ public class Forwarder {
         break;
       case 2:
         System.out.println("selectors");
-        break;
+        server = ServerSocketChannel.open();
+        server.bind(new InetSocketAddress("localhost", 3333));
+        server.configureBlocking(false);
+        Selector selector = Selector.open();
+        server.register(selector, SelectionKey.OP_ACCEPT);
+        int index = 0;
+        while (true) {
+          int numberOfClients = selector.select();
+          Set<SelectionKey> selectedkeys = selector.selectedKeys();
+          Iterator<SelectionKey> iter = selectedkeys.iterator();
+          while (iter.hasNext()) {
+            SelectionKey key = iter.next();
+            if (key.isAcceptable()) {
+              SocketChannel client = server.accept();
+              client.configureBlocking(false);
+              client.register(selector, SelectionKey.OP_READ, new Integer(index));
+              System.out.println("Client" + (index + 1) + " connected");
+              g.put(index, client);
+              index = index + 1;
+            }
+            if (key.isReadable()) {
+              SocketChannel c = (SocketChannel) key.channel();
+              ByteBuffer dst = ByteBuffer.allocate(50);
+              c.read(dst);
+              String m = new String(dst.array());
+              if (m.contains("exit")) {
+                server.close();
+                return;
+              }
+              int index1 = ((Integer) key.attachment()).intValue();
+              SocketChannel writeToClient;
+
+              if (index1 == 0)
+                writeToClient = g.get(1);
+              else
+                writeToClient = g.get(0);
+              dst.flip();
+              writeToClient.write(dst);
+              dst.clear();
+
+            }
+            iter.remove();
+          }
+        }
       case 3:
         System.out.println("netty");
         break;
@@ -62,6 +116,8 @@ class ForwarderHandler implements Runnable {
       try {
         has_data = in.readLine();
         if (has_data != null) {
+
+          // closes the IO data stream, socket connection if the telnet client sends exit
           if (has_data.contains("exit")) {
             in.close();
             out.close();

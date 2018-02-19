@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="/Users/Rashmi/Downloads/netty-4.1.17.Final/jar/all-in-one/netty-all-4.1.17.Final.jar" sourcepath="/Users/Rashmi/Downloads/netty-4.1.17.Final/jar/all-in-one/netty-all-4.1.17.Final-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/Users/Rashmi/Downloads/netty-4.1.17.Final/javadoc/netty-all-4.1.17.Final-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

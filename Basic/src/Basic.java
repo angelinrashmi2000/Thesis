@@ -28,30 +28,23 @@ public class Basic {
     EventLoopGroup bossGroup = new NioEventLoopGroup();
     EventLoopGroup workerGroup = new NioEventLoopGroup();
     try {
-      ServerBootstrap b = new ServerBootstrap(); // (2)
-      b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class) // (3)
-          .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
-            @Override
-            public void initChannel(SocketChannel ch) throws Exception {
-              ch.pipeline().addLast(new ServerForwarderHandler());
-            }
-          }).option(ChannelOption.SO_BACKLOG, 128) // (5)
-          .childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
+      ServerBootstrap b = new ServerBootstrap();
+      b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
+        @Override
+        public void initChannel(SocketChannel ch) throws Exception {
+          ch.pipeline().addLast(new ServerForwarderHandler());
+        }
+      }).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
 
       // Bind and start to accept incoming connections.
       ChannelFuture f = null;
       for (int port : ports) {
         f = b.bind(new InetSocketAddress("localhost", port)).sync();
       }
-
-      // Wait until the server socket is closed.
-      // In this example, this does not happen, but you can do that to gracefully
-      // shut down your server.
       // for (Channel f : serverChannels)
       f.channel().closeFuture().sync();
 
     } finally {
-      System.out.println("finally");
       workerGroup.shutdownGracefully();
       bossGroup.shutdownGracefully();
     }

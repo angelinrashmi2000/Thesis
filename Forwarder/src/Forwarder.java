@@ -13,16 +13,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import io.netty.channel.ChannelInboundHandlerAdapter;
 
-public class Forwarder {
+
+public class Forwarder extends ChannelInboundHandlerAdapter {
   static ServerSocket                    s1, s2;
   static ForwarderHandler                f1, f2;
   static ServerSocketChannel             server;
   static HashMap<Integer, SocketChannel> g = new HashMap<Integer, SocketChannel>();
 
   public static void main(String[] args) throws IOException, Exception, SecurityException {
-
-    int choice = 2;
+    int choice = 4;
     switch (choice) {
       case 1:
         //server listens to telnet client1 on port 3333
@@ -82,6 +83,8 @@ public class Forwarder {
               else
                 writeToClient = g.get(0);
               dst.flip();
+              writeToClient.register(selector, SelectionKey.OP_WRITE);
+              //       get the selection key, set interestedops to read and write
               writeToClient.write(dst);
               dst.clear();
 
@@ -91,7 +94,12 @@ public class Forwarder {
         }
       case 3:
         System.out.println("netty");
+
         break;
+      case 4:
+        //testing SelectorWrapper
+        SelectorWrapper sw = new SelectorWrapper("localhost", 3333);
+        sw.process();
     }
     return;
   }
